@@ -12,12 +12,16 @@ mysqld_safe &
 MARIADB_PID=$!
 wait_mysqld_process
 
-password_arg="identified by '${DB_PASS:-password}'"
-if [ ! -z "$DB_USER" ] && [ ! -z "$DB_NAME" ]; then
-mysql -e "create database $DB_NAME"
-mysql -e "grant all on ${DB_NAME}.* to ${DB_USER}@'%' $password_arg"
-elif [ ! -z "$DB_USER" ]; then
-mysql -e "create user ${DB_USER}@'%' $password_arg"
+echo "Set MariaDB root password"
+mysql -e "create user root@'%' identified by '${MARIADB_ROOT_PASSWORD:-admin}'"
+if [ ! -z "$MARIADB_USER" ] && [ ! -z "$MARIADB_DATABASE" ]; then
+echo "Create user and database"
+mysql -e "create database $MARIADB_DATABASE"
+mysql -e "grant all on ${MARIADB_DATABASE}.* to ${MARIADB_USER}@'%' identified by '${MARIADB_PASSWORD:-password}'"
+mysql -e "flush privileges"
+elif [ ! -z "$MARIADB_USER" ]; then
+echo "Create user"
+mysql -e "create user ${MARIADB_USER}@'%' identified by '${MARIADB_PASSWORD:-password}'"
 fi
 
 wait $MARIADB_PID 2>/dev/null
